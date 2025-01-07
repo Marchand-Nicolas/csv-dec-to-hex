@@ -6,6 +6,7 @@ collect csv files from the "in" folder, and save the converted csv files to the 
 import csv
 import sys
 import os
+import json
 
 in_folder = "in"
 out_folder = "out"
@@ -36,3 +37,39 @@ if not os.path.exists(out_folder):
 for file_name in os.listdir(in_folder):
     if file_name.endswith(".csv"):
         convert_csv_to_hex(os.path.join(in_folder, file_name))
+
+
+def convert_json_to_csv(file_name):
+    # Ensure the output folder exists
+    os.makedirs(out_folder, exist_ok=True)
+
+    # Read the JSON file
+    with open(file_name, "r") as json_file:
+        data = json.load(json_file)
+
+    # Check if the JSON is a valid format (keys as columns, values as rows)
+    if not isinstance(data, dict):
+        raise ValueError(
+            "JSON content must be an object with keys as columns and values as rows."
+        )
+
+    # Extract columns (keys) and rows (values)
+    columns = list(data.keys())
+    rows = zip(*data.values())  # Transpose rows from the JSON data
+
+    # Create output CSV file path
+    csv_file_name = os.path.join(
+        out_folder, os.path.splitext(os.path.basename(file_name))[0] + ".csv"
+    )
+
+    # Write to the CSV file
+    with open(csv_file_name, "w", newline="") as csv_file:
+        writer = csv.writer(csv_file)
+        writer.writerow(columns)  # Write header
+        writer.writerows(rows)  # Write rows
+
+
+for file_name in os.listdir(in_folder):
+    if file_name.endswith(".json"):
+        convert_json_to_csv(os.path.join(in_folder, file_name))
+print("Done")
